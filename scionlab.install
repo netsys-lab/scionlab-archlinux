@@ -12,27 +12,22 @@ post_install() {
     mkdir -p /etc/scion/
     chown -R scion:scion /etc/scion/
 
-    # own /run/shm/dispatcher
-    mkdir -p /run/shm/dispatcher
-    chown -R scion:scion /run/shm/dispatcher
-
-    # own /run/shm/sciond
-    mkdir -p /run/shm/sciond
-    chown -R scion:scion /run/shm/sciond
-
     systemctl daemon-reload
-
-
-    echo "To make SCIONLab fully functional, consider performing the following actions:"
-    echo "  + Start the necessary daemons:"
-    echo "      $ sudo systemctl start scionlab"
-    echo "  + (OPTIONAL) Start the daemons at boot:"
-    echo "      $ sudo systemctl enable scionlab"
-    echo "  + Add your user to the scion group to interact with scion without sudo:"
-    echo "      $ sudo usermod -a -G scion <username>"
-    echo "    Login again for the change to take effect or run the following command"
-    echo "    for a change affecting only the current shell:"
-    echo "      $ newgrp scion"
+    
+    echo "In order for SCIONLab to work, it still needs a configuration:"
+    echo "- Follow https://docs.scionlab.org/content/config/create_as.html"
+    echo "- To install your config, run"
+    echo "   $ sudo scionlab-config --host-id=<host_id> --host-secret=<secret>"
+    echo "      (fill in <host_id> and <secret> with the correct data)"
+    echo "- Consider starting scionlab at boot-time"
+    echo "   $ sudo systemctl enable scionlab"
+    echo "If you have trouble, consult"
+    echo "https://docs.scionlab.org/content/install/pkg.html#configuration"
+    echo 
+    echo "Note that a custom openvpn systemd service has been installed."
+    echo "Usage:"
+    echo "   $ sudo systemctl restart scionlab-openvpn@client-scionlab-<attachment point ISD-AS>"
+    echo "  (scionlab-config has been patched to use this service automatically)"
 }
 
 pre_upgrade() {
@@ -50,8 +45,8 @@ pre_remove() {
     id scion >/dev/null 2>&1 && userdel scion
     rmdir -v /var/lib/scion
     rmdir -v /etc/scion
-    rmdir -v /run/shm/sciond
-    rmdir -v /run/shm/dispatcher
+    rm -vf /dev/shm/sciond
+    rm -vf /dev/shm/dispatcher
 }
 
 post_remove() {
