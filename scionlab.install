@@ -1,0 +1,59 @@
+post_install() {
+    id scion >/dev/null 2>&1 || useradd --no-create-home --system scion
+    getent group scion >/dev/null 2>&1 || groupadd scion >/dev/null 2>&1
+    usermod -g scion scion >/dev/null 2>&1
+
+    
+    # Same for gen-cache folder
+    mkdir -p /var/lib/scion/
+    chown -R scion:scion /var/lib/scion/
+
+    # Same for gen folder
+    mkdir -p /etc/scion/
+    chown -R scion:scion /etc/scion/
+
+    # own /run/shm/dispatcher
+    mkdir -p /run/shm/dispatcher
+    chown -R scion:scion /run/shm/dispatcher
+
+    # own /run/shm/sciond
+    mkdir -p /run/shm/sciond
+    chown -R scion:scion /run/shm/sciond
+
+    systemctl daemon-reload
+
+
+    echo "To make SCIONLab fully functional, consider performing the following actions:"
+    echo "  + Start the necessary daemons:"
+    echo "      $ sudo systemctl start scionlab"
+    echo "  + (OPTIONAL) Start the daemons at boot:"
+    echo "      $ sudo systemctl enable scionlab"
+    echo "  + Add your user to the scion group to interact with scion without sudo:"
+    echo "      $ sudo usermod -a -G scion <username>"
+    echo "    Login again for the change to take effect or run the following command"
+    echo "    for a change affecting only the current shell:"
+    echo "      $ newgrp scion"
+}
+
+pre_upgrade() {
+    # is this sufficient? what about the other daemons?
+    systemctl stop scionlab.target
+}
+
+post_upgrade() {
+    systemctl daemon-reload
+}
+
+pre_remove() {
+    systemctl stop scionlab.target
+    getent group scion >/dev/null 2>&1 && groupdel scion >/dev/null 2>&1
+    id scion >/dev/null 2>&1 && userdel scion
+    rmdir -v /var/lib/scion
+    rmdir -v /etc/scion
+    rmdir -v /run/shm/sciond
+    rmdir -v /run/shm/dispatcher
+}
+
+post_remove() {
+    systemctl daemon-reload
+}
